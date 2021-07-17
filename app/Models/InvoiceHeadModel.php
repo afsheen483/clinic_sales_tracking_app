@@ -13,6 +13,7 @@ class InvoiceHeadModel extends Model
     protected $fillable = [
         'id',
         'insurance_balance',
+        'total_balance',
         'patient_firstname',
         'patient_lastname',
         'clinic_id',

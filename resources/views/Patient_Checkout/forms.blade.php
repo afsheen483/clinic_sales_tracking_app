@@ -42,7 +42,7 @@
                             <div class="form-group">
                                
                                 <label for="">Location</label>
-                                    <select class="form-control" name="clinic_id" id="" disabled>
+                                    <select class="form-control" name="clinic_id" id="">
                                        
                                             @foreach ($clinic_array as $clinic)
                                             @if ($invoice_patient_data[0]->clinic_id == $clinic->id)
@@ -59,7 +59,7 @@
                     <div class="col-2">
                         <div class="form-group">
                             <label for="">Doctor</label>
-                                <select class="form-control" name="doctor_id" id="" disabled>
+                                <select class="form-control" name="doctor_id" id="" >
                                     <option value="">Select Doctor Name</option>
                                         @foreach ($doctor_user_array as $doctor)
                                         @if ($invoice_patient_data[0]->doctor_id == $doctor->id)
@@ -75,32 +75,32 @@
                         <div class="form-group">
                             <label for="">Date</label>
                             @if (request()->id == 0)
-                                <input type="date" class="form-control" name="invoice_date" id="" value="<?php echo date('Y-m-d');?>" disabled>
+                                <input type="date" class="form-control" name="invoice_date" id="" value="<?php echo date('Y-m-d');?>">
                             @else
-                                <input type="date" class="form-control" name="invoice_date" id="" value="{{ $invoice_patient_data[0]->invoice_date }}" disabled>
+                                <input type="date" class="form-control" name="invoice_date" id="" value="{{ $invoice_patient_data[0]->invoice_date }}" >
                             @endif
                         </div>
                     </div>
                     <div class="col-2">
                         <div class="form-group">
                             <label for="">Firstname</label>
-                            <input type="text" class="form-control" name="patient_firstname"  placeholder="Enter Patient Firstname" value="{{ (is_null($invoice_patient_data[0]->patient_firstname)) ? '' : $invoice_patient_data[0]->patient_firstname}}"  disabled>
+                            <input type="text" class="form-control" name="patient_firstname"  placeholder="Enter Patient Firstname" value="{{ (is_null($invoice_patient_data[0]->patient_firstname)) ? '' : $invoice_patient_data[0]->patient_firstname}}" >
                         </div>
                     </div>
                     <div class="col-2">
                         <div class="form-group">
                             <label for="">Lastname</label>
-                            <input type="text" class="form-control" name="patient_lastname" id=""  placeholder="Enter Patient Lastname" value="{{ (is_null($invoice_patient_data[0]->patient_lastname)) ? '' : $invoice_patient_data[0]->patient_lastname}}" disabled>
+                            <input type="text" class="form-control" name="patient_lastname" id=""  placeholder="Enter Patient Lastname" value="{{ (is_null($invoice_patient_data[0]->patient_lastname)) ? '' : $invoice_patient_data[0]->patient_lastname}}">
                         </div>
                     </div>
                 </div> 
                 <div class="row" style="margin-left:0.1cm;margin-top:0.1cm;">
                     <div class="form-group" style="margin-top:0.4cm;">
                     @if ($invoice_patient_data[0]->is_out_of_pocket == 1)
-                        <input type="checkbox"  name="is_out_of_pocket" id="is_out_of_pocket"  placeholder="" value="1" checked disabled>
+                        <input type="checkbox"  name="is_out_of_pocket" id="is_out_of_pocket"  placeholder="" value="1" checked >
                         <label for="">Out Of Pocket</label>
                     @else
-                        <input type="checkbox"  name="is_out_of_pocket" id="is_out_of_pocket"  placeholder="" value="1" disabled>
+                        <input type="checkbox"  name="is_out_of_pocket" id="is_out_of_pocket"  placeholder="" value="1" >
                         <label for="">Out Of Pocket</label>
                     @endif
                     
@@ -108,7 +108,7 @@
                 
                    <div class="col-2">
                         <div class="form-group">
-                                <select class="form-control" name="primary_insurance_id" id="primary_insurance_payment" disabled>
+                                <select class="form-control" name="primary_insurance_id" id="primary_insurance_payment" >
                                     <option value="">Select Primary Insurance</option>
                                         @foreach ($insurance_array as $insurance)
                                         @if ($invoice_patient_data[0]->primary_insurance_id == $insurance->id)
@@ -122,7 +122,7 @@
                    </div>
                    <div class="col-2">
                         <div class="form-group">
-                                <select class="form-control" name="secondary_insurance_id" id="secondary_insurance_payment" disabled>
+                                <select class="form-control" name="secondary_insurance_id" id="secondary_insurance_payment">
                                     <option value="">Select Secondary Insurance</option>
                                         @foreach ($insurance_array as $insurance)
                                         @if ($invoice_patient_data[0]->secondary_insurance_id == $insurance->id)
@@ -282,6 +282,11 @@
                     <td><span id="total_payment_balance" style="margin-left: 1.7cm">$</span></td>
                     <td></td>
                  </tr>
+                 <tr style="font-weight: bold">
+                    <td colspan="2">Insurance Balance</td>
+                    <td><input type="text" name="insurance_balance" id="insurance_balance" placeholder="$" class="form-control col-6" style="margin-left: 1.7cm" value="{{ $invoice_patient_data[0] == null ? '$' : $invoice_patient_data[0]->insurance_balance }}" disabled></td>
+                    <td>Total Balance: <span id="Total_balance">{{ $invoice_patient_data[0] == null ? '$' : $invoice_patient_data[0]->total_balance }}</span><input type="text" name="total_balance" id="total_bal" value="{{ $invoice_patient_data[0] == null ? '$' : $invoice_patient_data[0]->total_balance }}" hidden></td>
+                </tr>
                     </table>
                     <br>
                     <div class="row" >
@@ -592,13 +597,13 @@
             @endforeach
             <tr style="font-weight: bold">
             <td colspan="2">Balance</td>
-            <td><span id="total_payment_balance" style="margin-left: 1.7cm">$</span></td>
+            <td><span id="total_payment_balance" style="margin-left: 1.7cm">$</span><input type="text" id="cop_bal"  value="" hidden></td>
             <td></td>
             </tr>
                <tr style="font-weight: bold">
                    <td colspan="2">Insurance Balance</td>
-                   <td><input type="text" name="insurance_balance" id="insurance_balance" placeholder="$" class="form-control col-6" style="margin-left: 1.7cm"></td>
-                   <td>Total Balance: <span id="Total_balance">$</span></td>
+                   <td><input type="text" name="insurance_balance" id="insurance_balance" placeholder="$" class="form-control col-6" style="margin-left: 1.7cm" value="{{ $invoice_patient_data[0] == null ? '$' : $invoice_patient_data[0]->insurance_balance }}"></td>
+                   <td>Total Balance: <span id="Total_balance">{{ $invoice_patient_data[0] == null ? '$' : $invoice_patient_data[0]->total_balance }}</span><input type="text" name="total_balance" id="total_bal" value="{{ $invoice_patient_data[0] == null ? '$' : $invoice_patient_data[0]->total_balance }}" hidden></td>
                </tr>
             </tbody>
         </table>
@@ -649,7 +654,7 @@
         $(document).ready(function(){
              
                 
-           $('.copayment,.extra_copayment,.insurance_payment,.payment_methods,.quantity,.unit_price').keyup(function () {
+           $('.copayment,.extra_copayment,.insurance_payment,.payment_methods,.quantity,.unit_price,#insurance_balance').keyup(function () {
                  var sum = 0;
                  var difference = 0;
                  
@@ -685,6 +690,7 @@
                     grand_total = sum + mult ;
                    // $("#total_copayment").text(mult);
                     $("#total_copayment").html("$"+grand_total);
+                   
 
                     var payment_sum = 0;
 
@@ -696,12 +702,13 @@
                 balance = grand_total - payment_sum;
 
                 $("#total_payment_balance").html("$"+balance);
-                $("#insurance_balance").keyup(function(){
-                    var val = $(this).val();
+                $("#cop_bal").val(balance);
+                    
+                    var val = $("#insurance_balance").val();
                     var t_insurance_balance = Number(balance) + Number(val);
                     $("#Total_balance").html("$"+t_insurance_balance);
+                    $("#total_bal").val(t_insurance_balance);
 
-                })
 
 
  });

@@ -228,7 +228,7 @@ Tagged Cases
                   <th>Copay/PP</th>
                   <th>Insurance/PP</th>
                   @if (Request::route('filter') == 'end_of_the_day' || request()->has('clinic_id') == true  )
-                  <th>Insurance Balance</th>
+                  <th>Balance</th>
                   @endif
                   <th>Copay Collection</th>
                   {{-- @if (Request::route('filter') == 'insurance_payments' || request()->has('from_date') == true && request()->has('to_date') == true )
@@ -302,7 +302,7 @@ Tagged Cases
                       {{ $data->insurance_payment }}
                       @endif</td>
                       @if (Request::route('filter') == 'end_of_the_day' || request()->has('clinic_id') == true  )
-                      <td>{{ $data->insurance_balance }}</td>
+                      <td>{{ $data->total_balance }}</td>
                       @endif
                       <td>{{ $data->payment_title }}</td>
                       {{-- @if (Request::route('filter') == 'insurance_payments' || request()->has('from_date') == true && request()->has('to_date') == true )
@@ -507,23 +507,23 @@ Tagged Cases
                 <tbody>
                   <tr style="background-color:rgb(214, 209, 209)">
                     <td >Opening Balance</td>
-                    <input type="text" name="clinic_id" id="c_id"  value="{{ is_null($saling_percentage[0]->clinic_id) ? '' : $saling_percentage[0]->clinic_id }}" hidden>
+                    <input type="text" name="clinic_id" id="c_id"  value="{{ is_null($saling_percentage[0]->clinic_id) ? '' : $saling_percentage[0]->clinic_id }}" hidden >
                     
                     <input type="text" name="cash_till_date" id="cash_till_date" value="{{ ($reports == null) ? '' : $reports[0]->invoice_date }}" hidden>
-                    <td><input type="text" name="yester_day_balance" id="yester_day_balance" class="form-control col-8"  value="${{ $yesterday_balance == null ? '' : $yesterday_balance[0]->yesterday_balance }}" style="color: red;font-weight:bold"></td>
+                    <td><input type="text" name="yester_day_balance" id="yester_day_balance" class="form-control col-8"  value="{{ $yesterday_balance == null ? '' : $yesterday_balance[0]->yesterday_balance }}" style="color: red;font-weight:bold" placeholder="$"></td>
                   </tr>
                   <tr style="background-color:rgb(214, 209, 209)">
                     <td>Cash Received Today</td>
-                    <td><input type="text" name="cash_received" id="cash_received"  class="form-control col-8"  value="${{ $today_balance[0]->today_balance }}">
+                    <td><input type="text" name="cash_received" id="cash_received"  class="form-control col-8"  value="{{ $today_balance[0]->today_balance }}" placeholder="$">
                       {{-- <input type="text" name="today_balance" id="cash_rece"  class="form-control col-8" hidden value="${{ $today_balance[0]->today_balance }}"></td> --}}
                   </tr>
                   <tr style="background-color:rgb(214, 209, 209)">
                     <td>Any Refunds</td>
-                    <td><input type="text" name="any_refunds" id="refunds"  class="form-control col-8"></td>
+                    <td><input type="text" name="any_refunds" id="refunds"  class="form-control col-8" value="{{ $yesterday_balance == null ? '' : $yesterday_balance[0]->any_refunds }}" placeholder="$"></td>
                   </tr>
                   <tr style="background-color:rgb(214, 209, 209)">
                     <td>Extra Money Added</td>
-                    <td><input type="text" name="extra_money_added" id="extra_money_added"  class="form-control col-8"></td>
+                    <td><input type="text" name="extra_money_added" id="extra_money_added"  class="form-control col-8" value="{{ $yesterday_balance == null ? '' : $yesterday_balance[0]->extra_money_added	 }}" placeholder="$"></td>
                   </tr>
                   <tr style="background-color:rgb(214, 209, 209)">
                     <td>
@@ -535,7 +535,7 @@ Tagged Cases
                       @endforeach
                     </select>
                   </td>
-                    <td><input type="text" name="given_money" id="cash_given" class="form-control col-8" ></td>
+                    <td><input type="text" name="given_money" id="cash_given" class="form-control col-8" value="{{ $yesterday_balance == null ? '' : $yesterday_balance[0]->given_money	 }}" placeholder="$"></td>
                   </tr>
                   <tr style="background-color: rgb(250, 250, 84)">
                     <td>End Balance In Box</td>
@@ -621,16 +621,16 @@ Tagged Cases
           $(".total_copay").html("$"+total_c.toFixed(2));
        
 
-    $("#cash_received, #refunds, #extra_money_added,#cash_given").on("keyup",function(){
-      var str = $("#yester_day_balance").val();
-      var split_balance = str.split("$");
-      var cash = $("#cash_received").val();
-      var cash_received = cash.split("$");
+    $("#yester_day_balance,#cash_received, #refunds, #extra_money_added,#cash_given").on("keyup",function(){
+      var split_balance = $("#yester_day_balance").val();
+     // var  = str.split("$");
+      var cash_received = $("#cash_received").val();
+     // var  = cash.split("$");
       var refunds = $("#refunds").val();
       var extra_money_added = $("#extra_money_added").val();
       var cash_given = $("#cash_given").val();
 
-      var end_balance = Number(split_balance[1]) + Number(cash_received[1]) - Number(refunds) + Number(extra_money_added) - Number(cash_given);
+      var end_balance = Number(split_balance) + Number(cash_received) - Number(refunds) + Number(extra_money_added) - Number(cash_given);
       //console.log(end_balance);
       $("#end_balance").html("$"+end_balance.toFixed(2));
       $("#end_balance_id").val(end_balance.toFixed(2));
