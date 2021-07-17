@@ -596,9 +596,9 @@
             <td></td>
             </tr>
                <tr style="font-weight: bold">
-                   <td colspan="2">Statements/Balances</td>
-                   <td><span style="margin-left: 1.7cm">$</span></td>
-                   <td></td>
+                   <td colspan="2">Insurance Balance</td>
+                   <td><input type="text" name="insurance_balance" id="insurance_balance" placeholder="$" class="form-control col-6" style="margin-left: 1.7cm"></td>
+                   <td>Total Balance: <span id="Total_balance">$</span></td>
                </tr>
             </tbody>
         </table>
@@ -696,6 +696,12 @@
                 balance = grand_total - payment_sum;
 
                 $("#total_payment_balance").html("$"+balance);
+                $("#insurance_balance").keyup(function(){
+                    var val = $(this).val();
+                    var t_insurance_balance = Number(balance) + Number(val);
+                    $("#Total_balance").html("$"+t_insurance_balance);
+
+                })
 
 
  });

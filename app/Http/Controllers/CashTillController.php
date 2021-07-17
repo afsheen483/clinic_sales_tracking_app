@@ -14,7 +14,7 @@ class CashTillController extends Controller
         $split_balance = explode("$",$request->yester_day_balance);
         $split_cash = explode("$",$request->cash_received);
         $date = $request->cash_till_date;
-        // dd($date);
+       //  dd($date);
         $user_id = Auth::user()->id;
         // if( $date == ''){
         // $date = date("Y-m-d");

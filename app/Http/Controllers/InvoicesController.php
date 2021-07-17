@@ -68,7 +68,7 @@ class InvoicesController extends Controller
            // dd($date."clinic_id".$clinic_id);
             $reports = DB::select("SELECT result.*, SUM(ip.amount) AS ip_total, GROUP_CONCAT(DISTINCT p.title SEPARATOR  ' \n ') AS payment_title FROM (
                 SELECT base.*,  d.quantity,  d.pro_unit_price, CONCAT('$', SUM(d.copayment)) AS total_amount,
-                            CONCAT('$',SUM(d.insurance_payment)) AS insurance_payment, GROUP_CONCAT(DISTINCT s.title SEPARATOR  ' , ') AS title FROM (
+                            CONCAT('$',SUM(d.insurance_payment)) AS insurance_payment, GROUP_CONCAT(DISTINCT s.title SEPARATOR  ',') AS title FROM (
                                         SELECT
                                                     h.id,
                                                     h.is_completed,
@@ -76,6 +76,8 @@ class InvoicesController extends Controller
                                                     (si.insurance_title) AS s_insurance_title,                              
                                                     h.invoice_date,
                                                     u.name,
+                                                    CONCAT('$',h.insurance_balance) AS insurance_balance,
+                                                    h.is_out_of_pocket,
                                                     h.patient_firstname,
                                                     h.patient_lastname,
                                                     h.primary_insurance_id,  
@@ -105,19 +107,17 @@ class InvoicesController extends Controller
                                         ORDER BY result.id DESC 
                                         ");
 
-                                        $yesterday_balance = DB::select("SELECT CONVERT(SUM(d.copayment),decimal(10,2)) AS yesterday_balance,h.invoice_date
+                                        $yesterday_balance = DB::select("SELECT c.opening_balance AS yesterday_balance,c.cash_till_date AS invoice_date FROM cash_till c JOIN invoice_head h ON h.clinic_id = c.clinic_id 
+                                        WHERE c.cash_till_date =  h.invoice_date = '".$date."' AND h.clinic_id = '".$clinic_id."' GROUP BY c.cash_till_date");
+                                      // dd($yesterday_balance);
+                                       $today_balance = DB::select("SELECT CONVERT(IFNULL(SUM(d.copayment),0),decimal(10,2)) AS today_balance,h.invoice_date
                                         FROM  invoice_details d JOIN invoice_head h ON d.invoice_head_id = h.id
                                         JOIN invoice_payments p ON p.invoice_head_id = h.id
-                                            WHERE h.invoice_date = '".$date."'  - INTERVAL 1 DAY  AND h.is_deleted = 0 AND p.payment_method_id = 2
-                                        ");
-                                        $today_balance = DB::select("SELECT CONVERT(SUM(d.copayment),decimal(10,2)) AS today_balance,h.invoice_date
-                                        FROM  invoice_details d JOIN invoice_head h ON d.invoice_head_id = h.id
-                                        JOIN invoice_payments p ON p.invoice_head_id = h.id
-                                            WHERE h.invoice_date = '".$date."'   AND h.is_deleted = 0 AND p.payment_method_id = 2
+                                            WHERE h.invoice_date = '".$date."' AND h.clinic_id = '".$clinic_id."'  AND h.is_deleted = 0 AND p.payment_method_id = 2
                                         ");
                        //$today_balance =  InvoiceHeadModel::select('invoice_head.*',DB::raw('SUM(invoice_details.copayment) as today_balance'))->join('invoice_details','invoice_head.id','invoice_details.invoice_head_id')->where('invoice_head.invoice_date',$date)->get();
                 // $saling_percentage[] = new DB();
-                //dd($today_balance);
+                
                 $saling_percentage = DB::select("SELECT base.*, CONCAT(CONVERT(base.fundus_ratio + base.medical_ratio,decimal(10,2)),'%') AS fun_medical_ratio FROM(
                     SELECT
                             COUNT(DISTINCT h.id) AS total_patients,
@@ -138,8 +138,8 @@ class InvoicesController extends Controller
                             CONCAT(20,'%') AS family_target,
                                 (SELECT COUNT(ih.family_upsell ) FROM invoice_head ih WHERE ih.invoice_date = h.invoice_date AND ih.clinic_id = h.clinic_id AND ih.family_upsell = 1) AS family_upsell_count  
                             FROM
-                            invoice_details d
-                            JOIN invoice_head h ON
+                            invoice_head h
+                           LEFT JOIN invoice_details d ON
                             d.invoice_head_id = h.id
                             WHERE h.is_deleted = 0 AND h.invoice_date = '".$date."' AND h.clinic_id = '".$clinic_id."'
 )
@@ -296,6 +296,7 @@ AS base");
                     'secondary_insurance_id' => $request->secondary_insurance_id,
                     'is_out_of_pocket' => $is_out_of_pocket,
                     'family_upsell' => $family_upsell,
+                    'insurance_balance' => $request->insurance_balance,
                     'is_completed' => $is_completed,
                     'invoice_amount' => $request->total_amount,
                     'invoice_date' => $request->invoice_date,
@@ -509,6 +510,7 @@ foreach ($data as $value) {
                     'secondary_insurance_id' => $request->secondary_insurance_id,
                     'is_out_of_pocket' => $is_out_of_pocket,
                     'family_upsell' => $family_upsell,
+                    'insurance_balance' => $request->insurance_balance,
                     'is_completed' => $is_completed,
                     'invoice_amount' => $request->total_amount,
                     'invoice_date' => $request->invoice_date,
@@ -730,14 +732,16 @@ foreach ($data as $value) {
          $reports = DB::select("SELECT result.*, SUM(ip.amount) AS ip_total, GROUP_CONCAT(DISTINCT p.title SEPARATOR  ' \n ') AS payment_title FROM (
             SELECT base.*, d.quantity,  d.pro_unit_price,    
                         CONCAT('$', SUM(d.copayment)) AS total_amount,
-                        CONCAT('$',SUM(d.insurance_payment)) AS insurance_payment, GROUP_CONCAT(DISTINCT s.title SEPARATOR  ' , ') AS title FROM (
+                        CONCAT('$',SUM(d.insurance_payment)) AS insurance_payment, GROUP_CONCAT(DISTINCT s.title SEPARATOR  ',') AS title FROM (
                                     SELECT
                                                 h.id,
                                                 (i.insurance_title) AS p_insurance_title,
                                                 (si.insurance_title) AS s_insurance_title,                              
                                                 h.invoice_date,
                                                 u.name,
+                                                CONCAT('$',h.insurance_balance) AS insurance_balance,
                                                 h.is_completed,
+                                                h.is_out_of_pocket,
                                                 h.patient_firstname,
                                                 h.patient_lastname,
                                                 h.primary_insurance_id,  
@@ -766,16 +770,14 @@ foreach ($data as $value) {
             ");
 
                 
-            $yesterday_balance = DB::select("SELECT CONVERT(SUM(d.copayment),decimal(10,2)) AS yesterday_balance,h.invoice_date
-            FROM  invoice_details d JOIN invoice_head h ON d.invoice_head_id = h.id
-            JOIN invoice_payments p ON p.invoice_head_id = h.id
-                WHERE h.invoice_date = '".$date."'  - INTERVAL 1 DAY  AND h.is_deleted = 0 AND p.payment_method_id = 2
-            ");
-            $today_balance = DB::select("SELECT CONVERT(SUM(d.copayment),decimal(10,2)) AS today_balance,h.invoice_date
-            FROM  invoice_details d JOIN invoice_head h ON d.invoice_head_id = h.id
-            JOIN invoice_payments p ON p.invoice_head_id = h.id
-                WHERE h.invoice_date = '".$date."'   AND h.is_deleted = 0 AND p.payment_method_id = 2
-            "); 
+            $yesterday_balance = DB::select("SELECT c.opening_balance AS yesterday_balance,c.cash_till_date AS invoice_date FROM cash_till c JOIN invoice_head h ON h.clinic_id = c.clinic_id 
+                                        WHERE c.cash_till_date =  h.invoice_date = '".$date."' AND h.clinic_id = '".$clinic_id."' GROUP BY c.cash_till_date");
+                                      // dd($yesterday_balance);
+                                       $today_balance = DB::select("SELECT CONVERT(IFNULL(SUM(d.copayment),0),decimal(10,2)) AS today_balance,h.invoice_date
+                                        FROM  invoice_details d JOIN invoice_head h ON d.invoice_head_id = h.id
+                                        JOIN invoice_payments p ON p.invoice_head_id = h.id
+                                            WHERE h.invoice_date = '".$date."' AND h.clinic_id = '".$clinic_id."'  AND h.is_deleted = 0 AND p.payment_method_id = 2
+                                        ");
                 
                 //dd($saling_percentage);
                 $saling_percentage = DB::select("SELECT base.*, CONCAT(CONVERT(base.fundus_ratio + base.medical_ratio,decimal(10,2)),'%') AS fun_medical_ratio FROM(
@@ -798,8 +800,8 @@ CONCAT(CONVERT( SUM(
                             CONCAT(20,'%') AS family_target,
                                 (SELECT COUNT(ih.family_upsell ) FROM invoice_head ih WHERE ih.invoice_date = h.invoice_date AND ih.clinic_id = h.clinic_id AND ih.family_upsell = 1) AS family_upsell_count  
                             FROM
-                            invoice_details d
-                            JOIN invoice_head h ON
+                            invoice_head h
+                           LEFT JOIN invoice_details d ON
                             d.invoice_head_id = h.id
                             WHERE h.is_deleted = 0 AND h.invoice_date = '".$date."' AND h.clinic_id = '".$clinic_id."'
                         )
@@ -812,14 +814,16 @@ CONCAT(CONVERT( SUM(
             $reports = DB::select("SELECT result.*, SUM(ip.amount) AS ip_total, GROUP_CONCAT(DISTINCT p.title SEPARATOR  ' \n ') AS payment_title FROM (
                 SELECT base.*, d.quantity,  d.pro_unit_price,    
                             CONCAT('$', SUM(d.copayment)) AS total_amount,
-                            CONCAT('$',SUM(d.insurance_payment)) AS insurance_payment, GROUP_CONCAT(DISTINCT s.title SEPARATOR  ' , ') AS title FROM (
+                            CONCAT('$',SUM(d.insurance_payment)) AS insurance_payment, GROUP_CONCAT(DISTINCT s.title SEPARATOR  ',') AS title FROM (
                                         SELECT
                                                     h.id,
                                                     (i.insurance_title) AS p_insurance_title,
                                                     (si.insurance_title) AS s_insurance_title,                              
                                                     h.invoice_date,
                                                     u.name,
+                                                    CONCAT('$',h.insurance_balance) AS insurance_balance,
                                                     h.is_completed,
+                                                    h.is_out_of_pocket,
                                                     h.patient_firstname,
                                                     h.patient_lastname,
                                                     h.primary_insurance_id,  
@@ -846,16 +850,14 @@ CONCAT(CONVERT( SUM(
                                         GROUP BY result.id
                                         ORDER BY result.id DESC ");
 
-                    $yesterday_balance = DB::select("SELECT CONVERT(SUM(d.copayment),decimal(10,2)) AS yesterday_balance,h.invoice_date
-                    FROM  invoice_details d JOIN invoice_head h ON d.invoice_head_id = h.id
-                    JOIN invoice_payments p ON p.invoice_head_id = h.id
-                        WHERE h.invoice_date = '".$date."'  - INTERVAL 1 DAY  AND h.is_deleted = 0 AND p.payment_method_id = 2
-                    ");
-                    $today_balance = DB::select("SELECT CONVERT(SUM(d.copayment),decimal(10,2)) AS today_balance,h.invoice_date
-                    FROM  invoice_details d JOIN invoice_head h ON d.invoice_head_id = h.id
-                    JOIN invoice_payments p ON p.invoice_head_id = h.id
-                        WHERE h.invoice_date = '".$date."'   AND h.is_deleted = 0 AND p.payment_method_id = 2
-                    ");
+                                        $yesterday_balance = DB::select("SELECT c.opening_balance AS yesterday_balance,c.cash_till_date AS invoice_date FROM cash_till c JOIN invoice_head h ON h.clinic_id = c.clinic_id 
+                                        WHERE c.cash_till_date =  h.invoice_date = '".$date."' AND h.clinic_id = '".$clinic_id."' GROUP BY c.cash_till_date");
+                                      // dd($yesterday_balance);
+                                       $today_balance = DB::select("SELECT CONVERT(IFNULL(SUM(d.copayment),0),decimal(10,2)) AS today_balance,h.invoice_date
+                                        FROM  invoice_details d JOIN invoice_head h ON d.invoice_head_id = h.id
+                                        JOIN invoice_payments p ON p.invoice_head_id = h.id
+                                            WHERE h.invoice_date = '".$date."' AND h.clinic_id = '".$clinic_id."'  AND h.is_deleted = 0 AND p.payment_method_id = 2
+                                        ");
                 // $saling_percentage[] = new DB();
                // dd($yesterday_balance);
                 $saling_percentage = DB::select("SELECT base.*, CONCAT(CONVERT(base.fundus_ratio + base.medical_ratio,decimal(10,2)),'%') AS fun_medical_ratio FROM(
@@ -878,8 +880,8 @@ CONCAT(CONVERT( SUM(
                             CONCAT(20,'%') AS family_target,
                                 (SELECT COUNT(ih.family_upsell ) FROM invoice_head ih WHERE ih.invoice_date = h.invoice_date AND ih.clinic_id = h.clinic_id AND ih.family_upsell = 1) AS family_upsell_count  
                             FROM
-                            invoice_details d
-                            JOIN invoice_head h ON
+                            invoice_head h
+                           LEFT JOIN invoice_details d ON
                             d.invoice_head_id = h.id
                             WHERE h.is_deleted = 0 AND h.invoice_date = '".$date."' AND h.clinic_id = '".$clinic_id."'
                         )

@@ -227,12 +227,18 @@ Tagged Cases
                   <th>Insurance</th>
                   <th>Copay/PP</th>
                   <th>Insurance/PP</th>
+                  @if (Request::route('filter') == 'end_of_the_day' || request()->has('clinic_id') == true  )
+                  <th>Insurance Balance</th>
+                  @endif
                   <th>Copay Collection</th>
-                  @if (Request::route('filter') == 'insurance_payments' || request()->has('from_date') == true && request()->has('to_date') == true )
+                  {{-- @if (Request::route('filter') == 'insurance_payments' || request()->has('from_date') == true && request()->has('to_date') == true )
                   <th>Post Insurance
                      Balance</th>
-                  @endif
+                  @endif --}}
                   <th>Doctor</th>
+                  @if (Request::route('filter') == 'end_of_the_day' || request()->has('clinic_id') == true  )
+                  <th>OOP</th>
+                  @endif
                   <th>
                   @if (Request::route('filter') == 'insurance_payments' || request()->has('from_date') == true && request()->has('to_date') == true )
                   Transaction 
@@ -261,7 +267,7 @@ Tagged Cases
                     @endif
                     @endif
                     @if(Request::route('filter') == 'insurance_payments' || request()->has('from_date') == true && request()->has('to_date') == true)
-                      <td>{{ $data->invoice_date }}</td>
+                      <td>{{ date('m/d/y',strtotime($data->invoice_date)) }}</td>
                     @endif
                     @if (Request::route('filter') == 'tagged_cases' || Request::route('filters') == 'all' || Request::route('filters') == 'pending' || Request::route('filters') == 'completed' || Request::route('filters') == 'invoiced')
                  
@@ -281,7 +287,7 @@ Tagged Cases
                       @endif
                       <td>{{ $data->title }}</td>
                       <td>@if ($data->p_insurance_title != '' ||$data->s_insurance_title != '')
-                        {{ $data->p_insurance_title }}{{ ", " }}{{ $data->s_insurance_title }}
+                        {{ $data->p_insurance_title }}{{ " " }}{{ $data->s_insurance_title }}
                       @else
                       {{ "" }}
                       @endif</td>
@@ -290,12 +296,26 @@ Tagged Cases
                       @else
                       {{ $data->total_amount }}
                       @endif</td>
-                      <td>{{ $data->insurance_payment }}</td>
-                      <td>{{ $data->payment_title }}</td>
-                      @if (Request::route('filter') == 'insurance_payments' || request()->has('from_date') == true && request()->has('to_date') == true )
-                        <td></td>
+                      <td>@if ($data->insurance_payment == '$0')
+                          {{ "" }}
+                      @else
+                      {{ $data->insurance_payment }}
+                      @endif</td>
+                      @if (Request::route('filter') == 'end_of_the_day' || request()->has('clinic_id') == true  )
+                      <td>{{ $data->insurance_balance }}</td>
                       @endif
+                      <td>{{ $data->payment_title }}</td>
+                      {{-- @if (Request::route('filter') == 'insurance_payments' || request()->has('from_date') == true && request()->has('to_date') == true )
+                        <td></td>
+                      @endif --}}
                       <td>{{ $data->name }}</td>
+                      @if (Request::route('filter') == 'end_of_the_day' || request()->has('clinic_id') == true )
+                      <td>@if ($data->is_out_of_pocket == 1)
+                        <span class="custom-badge status-green">{{ "OOP" }}</span>
+                      @else
+                        <span class="custom-badge status-red" id="approved">{{ "Not OOP " }}</span>
+                      @endif</td>
+                      @endif
                       <td>
                       @if (Request::route('filter') == 'insurance_payments' || request()->has('from_date') == true && request()->has('to_date') == true )
                         @if ($data->is_completed == 0 || $data->is_completed == NULL)
@@ -488,8 +508,9 @@ Tagged Cases
                   <tr style="background-color:rgb(214, 209, 209)">
                     <td >Opening Balance</td>
                     <input type="text" name="clinic_id" id="c_id"  value="{{ is_null($saling_percentage[0]->clinic_id) ? '' : $saling_percentage[0]->clinic_id }}" hidden>
-                    <input type="date" name="cash_till_date" id="cash_till_date" value="{{ ($reports == null) ? '' : $reports[0]->invoice_date }}" hidden>
-                    <td><input type="text" name="yester_day_balance" id="yester_day_balance" class="form-control col-8"  value="${{ $yesterday_balance[0]->yesterday_balance }}" style="color: red;font-weight:bold"></td>
+                    
+                    <input type="text" name="cash_till_date" id="cash_till_date" value="{{ ($reports == null) ? '' : $reports[0]->invoice_date }}" hidden>
+                    <td><input type="text" name="yester_day_balance" id="yester_day_balance" class="form-control col-8"  value="${{ $yesterday_balance == null ? '' : $yesterday_balance[0]->yesterday_balance }}" style="color: red;font-weight:bold"></td>
                   </tr>
                   <tr style="background-color:rgb(214, 209, 209)">
                     <td>Cash Received Today</td>

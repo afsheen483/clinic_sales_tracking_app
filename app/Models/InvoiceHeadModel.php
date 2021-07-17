@@ -12,6 +12,7 @@ class InvoiceHeadModel extends Model
     public $timestamps = false;
     protected $fillable = [
         'id',
+        'insurance_balance',
         'patient_firstname',
         'patient_lastname',
         'clinic_id',

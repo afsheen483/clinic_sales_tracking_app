@@ -47,7 +47,7 @@
                 @foreach ($invoice_data_details as $data)
                     
                 <tr>
-                    <td>{{ date('d/m/y',strtotime($data->invoice_date)) }}</td>
+                    <td>{{ date('m/d/y',strtotime($data->invoice_date)) }}</td>
                     <td>{{ date('l',strtotime($data->invoice_date)) }}</td>
                     <td>{{ $data->location}}</td>
                     <td>{{ $data->patient_firstname }}{{"  "}}{{$data->patient_lastname}}</td>

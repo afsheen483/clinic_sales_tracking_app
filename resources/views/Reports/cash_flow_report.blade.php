@@ -51,7 +51,7 @@
                     <tbody>
                       @foreach ($reports as $data)
                       <tr>
-                        <td>{{ $data->cash_till_date }}</td>
+                        <td>{{  date('m/d/y',strtotime($data->cash_till_date)) }}</td>
                         <td>{{ $data->location }}</td>
                         <td>${{ $data->opening_balance }}</td>
                         <td>${{ $data->cash_received_today }}</td>

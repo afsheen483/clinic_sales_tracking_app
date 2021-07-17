@@ -99,7 +99,7 @@
                     <tbody>
                       @foreach ($reports as $data)
                       <tr>
-                        <td>{{ date('m-d-y',strtotime($data->invoice_date)) }}</td>
+                        <td>{{ date('m/d/y',strtotime($data->invoice_date)) }}</td>
                         <td>{{ $data->week_number }}</td>
                         <td>{{ $data->year }}</td>
                         <td>{{ $data->location }}</td>
