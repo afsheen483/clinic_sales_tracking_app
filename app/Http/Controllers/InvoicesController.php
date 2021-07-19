@@ -108,7 +108,16 @@ class InvoicesController extends Controller
                                         ORDER BY result.id DESC 
                                         ");
 
-                                        $yesterday_balance = DB::select("SELECT c.*, c.opening_balance AS yesterday_balance,c.cash_till_date AS invoice_date FROM cash_till c JOIN invoice_head h ON h.clinic_id = c.clinic_id WHERE c.cash_till_date = DATE_SUB('".$date."', INTERVAL 1 DAY)  AND h.clinic_id = '".$clinic_id."' GROUP BY c.cash_till_date");
+                                        $yesterday_balance = DB::select("SELECT
+                                        c.*,
+                                        c.opening_balance AS yesterday_balance,
+                                        c.cash_till_date AS invoice_date
+                                    FROM
+                                        cash_till c
+                                    JOIN invoice_head h ON
+                                        h.clinic_id = c.clinic_id
+                                    WHERE  c.clinic_id = '".$clinic_id."'
+                                    ORDER BY c.id DESC LIMIT 1");
                                       // dd($yesterday_balance);
                                        $today_balance = DB::select("SELECT CONVERT(IFNULL(SUM(d.copayment),0),decimal(10,2)) AS today_balance,h.invoice_date
                                         FROM  invoice_details d JOIN invoice_head h ON d.invoice_head_id = h.id
@@ -773,7 +782,16 @@ foreach ($data as $value) {
             ");
 
                 
-            $yesterday_balance = DB::select("SELECT c.*, c.opening_balance AS yesterday_balance,c.cash_till_date AS invoice_date FROM cash_till c JOIN invoice_head h ON h.clinic_id = c.clinic_id WHERE c.cash_till_date = DATE_SUB('".$date."', INTERVAL 1 DAY)  AND h.clinic_id = '".$clinic_id."' GROUP BY c.cash_till_date");
+            $yesterday_balance = DB::select("SELECT
+                        c.*,
+                        c.opening_balance AS yesterday_balance,
+                        c.cash_till_date AS invoice_date
+                    FROM
+                        cash_till c
+                    JOIN invoice_head h ON
+                        h.clinic_id = c.clinic_id
+                    WHERE  c.clinic_id = '".$clinic_id."'
+                    ORDER BY c.id DESC LIMIT 1");
 
                                       //dd($yesterday_balance);
                                        $today_balance = DB::select("SELECT CONVERT(IFNULL(SUM(d.copayment),0),decimal(10,2)) AS today_balance,h.invoice_date
@@ -854,7 +872,16 @@ CONCAT(CONVERT( SUM(
                                         GROUP BY result.id
                                         ORDER BY result.id DESC ");
 
-                                        $yesterday_balance = DB::select("SELECT c.*, c.opening_balance AS yesterday_balance,c.cash_till_date AS invoice_date FROM cash_till c JOIN invoice_head h ON h.clinic_id = c.clinic_id WHERE c.cash_till_date = DATE_SUB('".$date."', INTERVAL 1 DAY)  AND h.clinic_id = '".$clinic_id."' GROUP BY c.cash_till_date");
+                                        $yesterday_balance = DB::select("SELECT
+                                        c.*,
+                                        c.opening_balance AS yesterday_balance,
+                                        c.cash_till_date AS invoice_date
+                                    FROM
+                                        cash_till c
+                                    JOIN invoice_head h ON
+                                        h.clinic_id = c.clinic_id
+                                    WHERE  c.clinic_id = '".$clinic_id."'
+                                    ORDER BY c.id DESC LIMIT 1");
 
                                       //dd($yesterday_balance);
                                        $today_balance = DB::select("SELECT CONVERT(IFNULL(SUM(d.copayment),0),decimal(10,2)) AS today_balance,h.invoice_date
