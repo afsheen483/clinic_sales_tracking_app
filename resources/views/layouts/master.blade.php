@@ -26,6 +26,11 @@
 .sidebar-inner{
     overflow:  visible !important;
 }
+.slimScrollBar{
+    overflow-y: scroll;
+  height: auto;
+  max-height: 600px;
+}
 </style>
 
    
