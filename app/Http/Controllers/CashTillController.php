@@ -10,9 +10,7 @@ class CashTillController extends Controller
 {
     public function index(Request $request)
     {
-        
-        $split_balance = explode("$",$request->yester_day_balance);
-        $split_cash = explode("$",$request->cash_received);
+        //dd($request->all());
         $date = $request->cash_till_date;
        //  dd($date);
         $user_id = Auth::user()->id;
@@ -23,8 +21,8 @@ class CashTillController extends Controller
             'cash_till_date' => $date,
         ],[
             'clinic_id' => $request->clinic_id,
-            'opening_balance' => $split_balance[1],
-            'cash_received_today' =>$split_cash[1],
+            'opening_balance' => $request->yester_day_balance,
+            'cash_received_today' =>$request->cash_received,
             'any_refunds' => $request->any_refunds,
             'given_money' => $request->given_money,
             'extra_money_added' => $request->extra_money_added,

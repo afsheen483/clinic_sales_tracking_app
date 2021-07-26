@@ -237,7 +237,7 @@ Tagged Cases
                   @endif --}}
                   <th>Doctor</th>
                   @if (Request::route('filter') == 'end_of_the_day' || request()->has('clinic_id') == true  )
-                  <th>OOP</th>
+                  {{-- <th>OOP</th> --}}
                   @endif
                   <th>
                   @if (Request::route('filter') == 'insurance_payments' || request()->has('from_date') == true && request()->has('to_date') == true )
@@ -310,11 +310,11 @@ Tagged Cases
                       @endif --}}
                       <td>{{ $data->name }}</td>
                       @if (Request::route('filter') == 'end_of_the_day' || request()->has('clinic_id') == true )
-                      <td>@if ($data->is_out_of_pocket == 1)
+                      {{-- <td>@if ($data->is_out_of_pocket == 1)
                         <span class="custom-badge status-green">{{ "OOP" }}</span>
                       @else
                         <span class="custom-badge status-red" id="approved">{{ "Not OOP " }}</span>
-                      @endif</td>
+                      @endif</td> --}}
                       @endif
                       <td>
                       @if (Request::route('filter') == 'insurance_payments' || request()->has('from_date') == true && request()->has('to_date') == true )
@@ -469,25 +469,26 @@ Tagged Cases
                     </tbody>
                     <thead>
                       <tr>
-                        <th style="background-color: rgb(250, 250, 84)">Total Patients</th>
-                        <th style="background-color: rgb(50, 230, 230)">Target</th>
+                        <th style="background-color: rgb(250, 250, 84)" colspan="2">Total Patients</th>
+                        {{-- <th style="background-color: rgb(50, 230, 230)">Target</th> --}}
                       </tr>
                     </thead>
                     <tbody>
                       <tr>
                        
-                        <td style="background-color:rgb(214, 209, 209)">
+                        <td style="background-color:rgb(214, 209, 209)" colspan="2">
                      
                         @if ($saling_percentage == null)
                             {{ '' }}
                         @else
                             {{$saling_percentage[0]->total_patients }}
                         @endif</td>
-                        <td style="background-color: rgb(50, 230, 230)">@if ($saling_percentage ==null)
+                        {{-- <td style="background-color: rgb(50, 230, 230)">@if ($saling_percentage ==null)
                             {{ '' }}
                         @else
                             {{$saling_percentage[0]->patient_target }}
-                        @endif</td>
+                        @endif</td> --}}
+
                       </tr>
                     </tbody>
                 </table>
@@ -635,7 +636,7 @@ Tagged Cases
       $("#end_balance").html("$"+end_balance.toFixed(2));
       $("#end_balance_id").val(end_balance.toFixed(2));
 
-    });
+    }).keyup();
       // checkbox
       $('[type=checkbox]').click(function ()
             {
@@ -823,6 +824,8 @@ Tagged Cases
                                 type: 'success',
                               })
                               th.parents('tr').hide();
+                              location.reload();
+
                             }
                           else{
                                 Swal.fire({

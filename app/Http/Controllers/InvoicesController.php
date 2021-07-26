@@ -117,7 +117,7 @@ class InvoicesController extends Controller
                                     JOIN invoice_head h ON
                                         h.clinic_id = c.clinic_id
                                     WHERE  c.clinic_id = '".$clinic_id."'
-                                    ORDER BY c.id DESC LIMIT 1");
+                                    ORDER BY c.cash_till_date DESC LIMIT 1");
                                       // dd($yesterday_balance);
                                        $today_balance = DB::select("SELECT CONVERT(IFNULL(SUM(d.copayment),0),decimal(10,2)) AS today_balance,h.invoice_date
                                         FROM  invoice_details d JOIN invoice_head h ON d.invoice_head_id = h.id
