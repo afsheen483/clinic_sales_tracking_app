@@ -116,7 +116,7 @@ class InvoicesController extends Controller
                                         cash_till c
                                     JOIN invoice_head h ON
                                         h.clinic_id = c.clinic_id
-                                    WHERE  c.clinic_id = '".$clinic_id."'
+                                    WHERE  c.clinic_id = '".$clinic_id."' AND c.cash_till_date < '".$date."'
                                     ORDER BY c.cash_till_date DESC LIMIT 1");
                                       // dd($yesterday_balance);
                                        $today_balance = DB::select("SELECT CONVERT(IFNULL(SUM(d.copayment),0),decimal(10,2)) AS today_balance,h.invoice_date
@@ -783,15 +783,15 @@ foreach ($data as $value) {
 
                 
             $yesterday_balance = DB::select("SELECT
-                        c.*,
-                        c.opening_balance AS yesterday_balance,
-                        c.cash_till_date AS invoice_date
-                    FROM
-                        cash_till c
-                    JOIN invoice_head h ON
-                        h.clinic_id = c.clinic_id
-                    WHERE  c.clinic_id = '".$clinic_id."'
-                    ORDER BY c.id DESC LIMIT 1");
+            c.*,
+            c.opening_balance AS yesterday_balance,
+            c.cash_till_date AS invoice_date
+        FROM
+            cash_till c
+        JOIN invoice_head h ON
+            h.clinic_id = c.clinic_id
+        WHERE  c.clinic_id = '".$clinic_id."' AND c.cash_till_date < '".$date."'
+        ORDER BY c.cash_till_date DESC LIMIT 1");
 
                                       //dd($yesterday_balance);
                                        $today_balance = DB::select("SELECT CONVERT(IFNULL(SUM(d.copayment),0),decimal(10,2)) AS today_balance,h.invoice_date
@@ -880,8 +880,8 @@ CONCAT(CONVERT( SUM(
                                         cash_till c
                                     JOIN invoice_head h ON
                                         h.clinic_id = c.clinic_id
-                                    WHERE  c.clinic_id = '".$clinic_id."'
-                                    ORDER BY c.id DESC LIMIT 1");
+                                    WHERE  c.clinic_id = '".$clinic_id."' AND c.cash_till_date < '".$date."'
+                                    ORDER BY c.cash_till_date DESC LIMIT 1");
 
                                       //dd($yesterday_balance);
                                        $today_balance = DB::select("SELECT CONVERT(IFNULL(SUM(d.copayment),0),decimal(10,2)) AS today_balance,h.invoice_date
