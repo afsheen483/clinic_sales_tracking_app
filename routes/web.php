@@ -50,6 +50,10 @@ Route::resource('doctors', 'DoctorController');
 
 Auth::routes();
 
+// check status
+
+Route::put('active_status_user/{id}','UserController@updatestatus')->middleware('auth');
+
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
 
@@ -88,7 +92,8 @@ Route::get("end_of_day_filter","InvoicesController@FilterDayLocation")->middlewa
 // route for end of day report
 Route::get('reports/{filter}/{date}/{clinic_id}','InvoicesController@index');
 Route::get('report/{filter}','InvoicesController@Insurance');
-
+// claim Status
+Route::put('claim_status_update/{id}','InvoicesController@ClaimStatus');
 
 
 
@@ -173,3 +178,25 @@ Route::get('transaction_report/{filters}','ReportController@TransactionReports')
 // Route for check email
 Route::post('user/checkemail', 'UserController@userEmailCheck');
 Route::post('edit/checkemail', 'UserController@editEmailCheck');
+
+
+// Route for complaint tracker
+Route::get('complaint_tracker','PatientComplaintTrackerController@index')->middleware('auth');
+Route::put('track_status_update/{id}','PatientComplaintTrackerController@TrackStatus')->middleware('auth');
+Route::get('complaint_create/{id}','PatientComplaintTrackerController@create')->middleware('auth');
+Route::put('manager_initials/{id}','PatientComplaintTrackerController@ManagerInitials')->middleware('auth');
+Route::put('manager_comments/{id}','PatientComplaintTrackerController@ManagerComments')->middleware('auth');
+Route::put('complaint_delete/{id}','PatientComplaintTrackerController@destroy')->middleware('auth');
+Route::post('complaint_store','PatientComplaintTrackerController@store')->middleware('auth');
+Route::put('complaint_update/{id}','PatientComplaintTrackerController@update')->middleware('auth');
+
+// Route for Contact lens
+Route::get('contact_lens','ContactLensController@index')->middleware('auth');
+Route::put('contact_lens_delete/{id}','ContactLensController@destroy')->middleware('auth');
+Route::get('contact_lens_create/{id}','ContactLensController@create')->middleware('auth');
+Route::post('contact_lens_store','ContactLensController@store')->middleware('auth');
+Route::put('contact_lens_update/{id}','ContactLensController@update')->middleware('auth');
+
+// Route for contact lens tracker
+Route::get('contact_lens_tracker','ContactLensController@ContactLensTracker')->middleware('auth');
+Route::put('lens_status_update/{id}','ContactLensController@StatusUpdate')->middleware('auth');

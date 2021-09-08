@@ -13,7 +13,7 @@ class AccountSummaryController extends Controller
     {
        $reports = DB::select("SELECT
        id,
-      	is_paid,
+        is_paid,
         total_patients,
         week_number,
         year,
@@ -30,7 +30,8 @@ class AccountSummaryController extends Controller
                 DECIMAL(10, 2)
             ),
             '%'
-        ) AS unpaid_percentage
+        ) AS unpaid_percentage,
+        is_completed
     FROM
         (
         SELECT
@@ -40,14 +41,12 @@ class AccountSummaryController extends Controller
             COUNT(h.id) total_patients,
             week(h.invoice_date) AS week_number,
             year(h.invoice_date) AS year,
+            h.is_completed,
             t.remarks,
-            
-            IFNULL(
                 SUM(
-                    CASE WHEN h.is_completed = 0 AND h.is_out_of_pocket = 0 THEN 1 ELSE 0
-                END
-            ),
-            0
+                    IFNULL(CASE WHEN IFNULL(h.is_completed,0) = 0 AND IFNULL(h.is_out_of_pocket,0) = 0 THEN 1 ELSE 0
+                END,0)
+           
     ) AS unpaid_count,
             (SELECT COUNT(ih.family_upsell ) FROM invoice_head ih WHERE year(ih.invoice_date) = year(h.invoice_date) AND week(ih.invoice_date) = week(h.invoice_date) AND ih.family_upsell = 1) AS family_upsell_count
             

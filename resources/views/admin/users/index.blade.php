@@ -34,9 +34,11 @@
                     <td>
                     <a href="users_edit/{{ $user->id }}" class="btn btn-info pull-left" style="margin-right: 3px;">Edit</a>
 
-                    {!! Form::open(['method' => 'DELETE', 'route' => ['users.destroy', $user->id] ]) !!}
-                    {!! Form::submit('Delete', ['class' => 'btn btn-danger']) !!}
-                    {!! Form::close() !!}
+                    @if($user->is_activate == 1)
+                         <button  class="btn btn-success pull-left check_btn" style="margin-right: 3px;" data-status = "{{ $user->id}}">Activate</button>
+                @else
+                     <button  class="btn btn-danger pull-left check_btn" style="margin-right: 3px;" data-status = "{{ $user->id}}">Deactivate</button>   
+                @endif
 
                     </td>
                 </tr>
@@ -51,3 +53,50 @@
 </div>
 
 @endsection
+@section('scripts')
+    <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function(){
+             $('.check_btn').on('click',function () {
+          var id = $(this).data("status");
+          console.log(id);
+          var url = "{{url('active_status_user')}}/"+id;
+         
+                      $.ajax({
+                      
+                        url : url,
+                        type : 'PUT',
+                        cache: false,
+                        data: {_token:'{{ csrf_token() }}'},
+                        success:function(data){
+                         if (data == 1) {
+                          Swal.fire({
+                              
+                                      position: 'top-end',
+                                      icon: 'success',
+                                      title: 'User has been deactivated successfully!',
+                                      showConfirmButton: false,
+                                      timer: 5000
+                        })
+                              location.reload();
+                         }if(data == 0){
+                            Swal.fire({
+                                position: 'top-end',
+                                      icon: 'success',
+                                      title: 'User has been activated successfully!',
+                                      showConfirmButton: false,
+                                      timer: 5000
+                              })
+                              location.reload();
+                         }
+                        
+                        }
+              
+              });
+               
+        });
+        });
+    </script>
+@endsection
+

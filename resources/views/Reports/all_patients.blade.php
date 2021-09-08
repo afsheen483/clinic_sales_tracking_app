@@ -47,7 +47,7 @@
                         <th>Insurance/PP</th>
                         <th>Copay Collection</th>
                         <th>Doctor</th>
-                        <th>Status</th>
+                       <!--  <th>Status</th> -->
                         <th> Transaction 
                           Status</th>
                         <th>Action</th>
@@ -69,13 +69,13 @@
                         <td>{{ $data->insurance_payment }}</td>
                         <td>{{ $data->payment_title }}</td>
                         <td>{{ $data->name }}</td>
-                        <td>
+                       <!--  <td>
                           @if ($data->paid == 1)
                           <span class="custom-badge status-green" id="paid">{{ "Paid" }}</span>
                           @else
                           <span class="custom-badge status-red" id="unpaid">{{ "Unpaid" }}</span>
                           @endif
-                        </td>
+                        </td> -->
                         <td>
                           @if ($data->is_completed == 1 )
                           <span class="custom-badge status-green" id="approved">{{ "Complete " }}</span>

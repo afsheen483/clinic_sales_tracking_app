@@ -111,12 +111,12 @@ class UserController extends Controller {
     * @return \Illuminate\Http\Response
     */
     public function update(Request $request, $id) {
-        $user = User::findOrFail($id); //Get role specified by id
+       $user = User::findOrFail($id); //Get role specified by id
 
     //Validate name, email and password fields    
         $this->validate($request, [
             'name'=>'required|max:120',
-            'email'=>'required|unique:users,'.$id,
+            'email'=>'required|unique:users,email,'.$id,
            
         ]);
         
@@ -180,6 +180,7 @@ class UserController extends Controller {
     }
     public function editEmailCheck(Request $request)
     {
+        //dd($request->all());
         $email = $request->email; 
         $id = $request->id;
         $userCount = User::where('id','!=',$id)->where('email', $email);
@@ -188,5 +189,26 @@ class UserController extends Controller {
         } else {
             return \Response::json(array('msg' => 'false'));
         }
+    }
+    public function updatestatus($id)
+    {
+        $is_active = User::where('id','=',$id)->get();
+       //dd($is_active);
+       if($is_active[0]->is_activate == 0){
+           $update = User::where('id','=',$id)->update([
+                'is_activate' => '1'
+           ]);
+           if ($update) {
+               return 1;
+           }
+       } 
+       if ($is_active[0]->is_activate == 1) {
+        $update = User::where('id','=',$id)->update([
+            'is_activate' => '0'
+       ]);
+       if ($update) {
+           return 0;
+       }
+    }
     }
 }

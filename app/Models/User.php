@@ -20,9 +20,11 @@ use HasRoles;
      * @var array
      */
     protected $fillable = [
+        'id',
         'name',
         'email',
         'password',
+        'is_activate',
     ];
 
     /**

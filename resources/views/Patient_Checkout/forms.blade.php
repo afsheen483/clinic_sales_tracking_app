@@ -225,7 +225,9 @@
                             @endphp
                         @endforeach
                        
-                       
+                            <td>Patient Balance</td>
+                            <td><input type="text" name="patient_balance" id="" required placeholder="Enter Patient's Balance"></td>
+                        
                         <tr style="font-weight: bold">
                             <td rowspan="4">Product</td>                        
                         </tr>
@@ -426,7 +428,7 @@
         <table  border= "1px solid black;" cellspacing="0" >
             <tbody>
                 <tr style="font-weight: bold">
-                    <td rowspan="5">Type of Service</td>
+                    <td rowspan="6">Type of Service</td>
                     <td>Service</td>
                     <td>Copayment</td>
                     <td>Insurance Payment</td>
@@ -435,6 +437,7 @@
                     $invoice_data = 0;
                     @endphp
                      @foreach ($service_array as $service)
+                    
                      <tr>
                          <td>
                               {{$service->title}}
@@ -442,9 +445,70 @@
                          <td>
                              <input name="invoice_detail_id_{{ $service->id }}" value="{{ (is_null($invoice_head_data[0]->id)) ? '' : $invoice_head_data[$invoice_data]->id}}"  hidden>
                              @if (request()->id > 0)
+                             @if ($service->id < 4)
                                  <input type="text" class="form-control col-6 copayment" name="copayment_{{ $service->id }}" id="copayment_{{ $service->id }}" placeholder="$" value="{{ $invoice_head_data[$invoice_data]->copayment}}" style="margin-left: 1.7cm" >
-                             @else
-                                 <input type="text" class="form-control col-6 copayment" name="copayment_{{ $service->id }}" id="copayment_{{ $service->id }}" placeholder="$"  style="margin-left: 1.7cm" >
+                            @endif
+                            @if ($service->title == 'Contact Lens Supply')
+                                <div class="row m">
+                                    <select name="contact_lens_id" id="" class="form-control col-4" style="margin-left: 3%">
+                                        <option value="">Product Name</option>
+                                        @foreach ($contact_lens_array as $data)
+                                                @if ($invoice_head_data[15]->contact_lens_id == $data->id)
+                                                    <option value="{{ $data->id }}" selected>{{ $data->contact_lens_name }}</option>
+
+                                                @else
+                                                    <option value="{{ $data->id }}">{{ $data->contact_lens_name }}</option>
+
+                                                @endif
+                                        @endforeach
+                                    </select>
+                                    <select name="year" id="year">
+                                        @while ($i < 2018)
+                                            <option value="{{ $i }}">{{ $i }}</option>
+                                            ++$i;
+                                        @endwhile
+                                    </select>
+                                    <input type="text" name="unit_price_{{ $service->id }}" id="contact_lens_price" class="form-control col-2 unit_price" placeholder="Price" value="{{ $invoice_head_data[15]->pro_unit_price}}">
+                                    <input type="text" name="quantity_{{ $service->id }}" id="contact_lens_qty" class="form-control col-2 quantity" placeholder="QTY"  value="{{ $invoice_head_data[15]->quantity}}">
+                                    <span  style="margin-left: 0.7cm; margin-top:0.2cm;font-weight:bold" id="contact_lens_cop">$</span>
+                                    <input type="text" name="copayment_{{ $service->id }}" id="copayment_{{ $service->id }}" hidden>
+                                @else
+                                </div>
+                            @endif
+                            @else
+                                   @if ($service->id < 4)
+                                    <input type="text" class="form-control col-6 copayment" name="copayment_{{ $service->id }}" id="copayment_{{ $service->id }}" placeholder="$"  style="margin-left: 1.7cm" >
+                                   @endif
+                                 @if ($service->title == 'Contact Lens Supply')
+                                 
+                                   <div class="row m">
+                                   
+                                    @if (request()->id == 0)
+                                        
+                                    <select name="contact_lens_id" id="" class="form-control col-4" style="margin-left: 3%">
+                                        <option value="">Product Name</option>
+                                        @foreach ($contact_lens_array as $data)
+                                       
+                                            <option value="{{ $data->id }}">{{ $data->contact_lens_name }}</option>
+
+                                       
+                                        @endforeach
+                                    </select>
+                                    <select name="year" id="year" class="form-control col-2">
+                                       <option value="">Year</option>
+                                       @for ($i = 2018; $i <= 2050; $i++)
+                                       <option value="{{ $i }}">{{ $i }}</option>
+
+                                       @endfor
+                                    </select>
+                                    <input type="text" name="unit_price_{{ $service->id }}" id="contact_lens_price" class="form-control col-2 unit_price" placeholder="Price" >
+                                    <input type="text" name="quantity_{{ $service->id }}" id="contact_lens_qty" class="form-control col-2 quantity" placeholder="QTY">
+                                    <span  style="margin-left: 0.3cm; margin-top:0.2cm;font-weight:bold" id="contact_lens_cop">$</span>
+                                    <input type="text" name="copayment_{{ $service->id }}" id="copayment_{{ $service->id }}" hidden>
+                                    @endif
+                                   
+                                   </div>
+                            @endif
                              @endif
                          </td>
              
@@ -463,7 +527,11 @@
                      </tr> 
                     @php
                          $invoice_data++;
+                        
                     @endphp
+                        @if ($invoice_data == 16)
+                        @break
+                    @endif
                  @endforeach
                      <tr>
                          <td></td>
@@ -513,10 +581,16 @@
                   
                   
                         <tr></tr>
-                       <tr><td rowspan="10" style="font-weight: bold">Extra Services</td></tr>
+                       <tr><td rowspan="14" style="font-weight: bold">Extra Services</td></tr>
+                     @php
+              
+                    $invoice_data = 3;
                     
+
+                @endphp
                
                 @foreach ($extra_service_array as $ext_service)
+
                 <tr>
                     <td>
                          {{$ext_service->title}}
@@ -534,13 +608,35 @@
                 @php
               
                     $invoice_data++;
-                  
+                    print_r($invoice_data);
+
                 @endphp
             @endforeach
-            <tr style="font-weight: bold">
-                <td rowspan="4">Product</td>
+            <td><b>Patient Balance</b></td>
+            <td><input type="text" name="patient_balance" id=""  placeholder="$" class="form-control col-6" style="margin-left: 1.7cm" value="{{ is_null($invoice_patient_data[0]->patient_balance) ? '' : $invoice_patient_data[0]->patient_balance }}"></td>
+            <td></td>
+            <tr>
+                <td><b>Other/Discount</b></td>
+            <td><input type="text" name="discount" id=""  placeholder="$" class="form-control col-6" style="margin-left: 1.7cm" value="{{ is_null($invoice_patient_data[0]->discount) ? '' : $invoice_patient_data[0]->discount }}"></td>
+            <td></td>
+            </tr>
+            <tr>
+                <td><b>Future Use</b></td>
+            <td><input type="text" name="" id=""  placeholder="$" class="form-control col-6" style="margin-left: 1.7cm"></td>
+            <td></td>
+            </tr>
+            <tr>
+                <td><b>Future Use</b></td>
+            <td><input type="text" name="" id=""  placeholder="$" class="form-control col-6" style="margin-left: 1.7cm"></td>
             
             </tr>
+            <tr style="font-weight: bold">
+                <td rowspan="4">Product</td>
+               
+            </tr>
+            @php
+                $invoice_data = 12;
+             @endphp
             @foreach ($product_array as $service)
             <tr>
                 <td >
@@ -564,6 +660,8 @@
             </tr>
             @php
                 $invoice_data++;
+                //print_r($invoice_data);
+                
             @endphp
             @endforeach
             
@@ -654,7 +752,7 @@
         $(document).ready(function(){
              
                 
-           $('.copayment,.extra_copayment,.insurance_payment,.payment_methods,.quantity,.unit_price,#insurance_balance').keyup(function () {
+           $('.copayment,.extra_copayment,.insurance_payment,.payment_methods,.quantity,.unit_price,#insurance_balance,#contact_lens_qty,#contact_lens_price').keyup(function () {
                  var sum = 0;
                  var difference = 0;
                  
@@ -662,7 +760,7 @@
                 sum += Number($(this).val());
             });
             // console.log(sum);
-             $("#total_copayment").html(sum);
+             $("#total_copayment").html(sum.toFixed(2));
 
        
        
@@ -674,22 +772,31 @@
 
         
             // console.log(total);
-             $("#sum_insurance_payment").html("$"+total_insurance);
+             $("#sum_insurance_payment").html("$"+total_insurance.toFixed(2));
 
              var mult = 0;
-             $("td.multiply").each(function(){
+             $("td.multiply,div.m").each(function(){
                 var quantity = $('.quantity', this).val();
                 var unit_price = $('.unit_price', this).val();
                 var total_multiply = (quantity * 1) * (unit_price * 1);
-                $('#total_copayment',this).text(total_multiply);
-                $('#quant_unit',this).text("$"+total_multiply);
+                $('#total_copayment').text(total_multiply.toFixed(2));
+                $('#quant_unit',this).text("$"+total_multiply.toFixed(2));
+                $('#contact_lens_cop',this).text("$"+total_multiply.toFixed(2));
 
                 mult += total_multiply;
              });
-                var grand_total = 0;
+             
+             var grand_total = 0;
                     grand_total = sum + mult ;
                    // $("#total_copayment").text(mult);
-                    $("#total_copayment").html("$"+grand_total);
+                   console.log(grand_total);
+                    $("#total_copayment").html("$"+grand_total.toFixed(2));
+            
+             
+        
+            
+             
+                
                    
 
                     var payment_sum = 0;
@@ -701,13 +808,13 @@
                 var balance = 0;
                 balance = grand_total - payment_sum;
 
-                $("#total_payment_balance").html("$"+balance);
-                $("#cop_bal").val(balance);
+                $("#total_payment_balance").html("$"+balance.toFixed(2));
+                $("#cop_bal").val(balance.toFixed(2));
                     
                     var val = $("#insurance_balance").val();
                     var t_insurance_balance = Number(balance) + Number(val);
-                    $("#Total_balance").html("$"+t_insurance_balance);
-                    $("#total_bal").val(t_insurance_balance);
+                    $("#Total_balance").html("$"+t_insurance_balance.toFixed(2));
+                    $("#total_bal").val(t_insurance_balance.toFixed(2));
 
 
 

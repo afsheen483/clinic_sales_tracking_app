@@ -226,8 +226,11 @@ Tagged Cases
                   <th>Type of Exam</th>
                   <th>Insurance</th>
                   <th>Copay/PP</th>
+                  @if (Request::route('filter') == 'insurance_payments' || request()->has('from_date') == true && request()->has('to_date') == true )
+                  <th>Claimed</th>
+                  @endif
                   <th>Insurance/PP</th>
-                  @if (Request::route('filter') == 'end_of_the_day' || request()->has('clinic_id') == true  )
+                  @if (Request::route('filter') == 'end_of_the_day' || request()->has('clinic_id') == true || Request::route('filter') == 'insurance_payments' || request()->has('from_date') == true && request()->has('to_date') == true )
                   <th>Balance</th>
                   @endif
                   <th>Copay Collection</th>
@@ -296,12 +299,27 @@ Tagged Cases
                       @else
                       {{ $data->total_amount }}
                       @endif</td>
+                      @if (Request::route('filter') == 'insurance_payments' || request()->has('from_date') == true && request()->has('to_date') == true )
+                      <td>
+                        @if ($data->claim_status == 'Unclaimed')
+                        <span class="custom-badge status-red" onclick="claim_status_toggle({{ $data->id }})" id="label_claim_{{ $data->id }}" style="cursor: pointer">{{ $data->claim_status }}</span>
+                        @elseif ($data->claim_status == 'Claimed')   
+                        <span class="custom-badge status-green" onclick="claim_status_toggle({{ $data->id }})" id="label_claim_{{ $data->id }}" style="cursor: pointer">{{ $data->claim_status }}</span>
+                     
+                        @endif
+                        <select name="claim_status" id="select_claim_{{ $data->id }}" onchange="claim_status(this.value,{{ $data->id }})" style="display: none" >
+                          <option value="">Select</option>
+                          <option value="Claimed">Claimed</option>
+                          <option value="Unclaimed">Unclaimed</option>
+                        </select>
+                      </td>
+                      @endif
                       <td>@if ($data->insurance_payment == '$0')
                           {{ "" }}
                       @else
                       {{ $data->insurance_payment }}
                       @endif</td>
-                      @if (Request::route('filter') == 'end_of_the_day' || request()->has('clinic_id') == true  )
+                      @if (Request::route('filter') == 'end_of_the_day' || request()->has('clinic_id') == true  || Request::route('filter') == 'insurance_payments' || request()->has('from_date') == true && request()->has('to_date') == true)
                       <td>{{ $data->total_balance }}</td>
                       @endif
                       <td>{{ $data->payment_title }}</td>
@@ -515,8 +533,8 @@ Tagged Cases
                   </tr>
                   <tr style="background-color:rgb(214, 209, 209)">
                     <td>Cash Received Today</td>
-                    <td><input type="text" name="cash_received" id="cash_received"  class="form-control col-8"  value="{{ $today_balance[0]->today_balance }}" placeholder="$">
-                      {{-- <input type="text" name="today_balance" id="cash_rece"  class="form-control col-8" hidden value="${{ $today_balance[0]->today_balance }}"></td> --}}
+                    <td><input type="text" name="cash_received" id="cash_received"  class="form-control col-8"  value="{{ ($yesterday_balance == null) ? '' : $yesterday_balance[0]->cash_received_today }}" placeholder="$">
+                      
                   </tr>
                   <tr style="background-color:rgb(214, 209, 209)">
                     <td>Any Refunds</td>
@@ -848,5 +866,36 @@ $("#btnExport").click(function (e) {
 
     e.preventDefault();
 });
+function claim_status_toggle(id){
+          $("#select_claim_"+id).show();
+          $("#label_claim_"+id).hide();
+        }
+        function claim_status(claim_status,id){
+          console.log(claim_status);
+                    $("#label_claim_"+id).text($("#select_claim_"+id).find(":selected").text());
+                    $("#select_claim_"+id).hide();
+                    $("#label_claim_"+id).show();
+                    var url = "{{ url('claim_status_update') }}/" + id;
+                    
+                    $.ajax({
+                        url: url,
+                        type: "PUT",
+                        cache: false,
+                        headers: {
+                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                            },
+                        data: {
+                            _token: '{{ csrf_token() }}',
+                            claim_status: claim_status
+                        },
+                        success: function(response) {
+                            console.log("success");
+                        },
+                        error: function(jqXHR, textStatus, errorThrown) {
+                            console.log("update request failure");
+                            //errorFunction(); 
+                        }
+                    });
+        }
     </script>
 @endsection

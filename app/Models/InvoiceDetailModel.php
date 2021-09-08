@@ -18,6 +18,7 @@ class InvoiceDetailModel extends Model
         'pro_unit_price',
         'copayment',
         'insurance_payment',
+        'contact_lens_id',
         'insurance_payment_entered_by',
         'insurance_payment_entered_at',
         'modified_at',

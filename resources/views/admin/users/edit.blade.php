@@ -24,7 +24,7 @@
 
     <div class="form-group">
         {{ Form::label('email', 'Email') }}
-        {{ Form::text('email', null, array('class' => 'form-control email','required' => '','id'=> $user->id )) }}
+        {{ Form::text('email', null, array('class' => 'form-control','required' => '','data-id'=> $user->id,'id'=>'email' )) }}
     </div>
 
     <h5><b>Give Role</b></h5>
@@ -60,8 +60,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.2/jquery.validate.min.js" type="text/javascript"></script>
 
 <script>
-      var email =  $(".email").val();
-      var id = $(".email").attr('id');
+      var email =  $("#email").val();
+      var id = $("#email").data('id');
       console.log(id);
     $('#registration').validate({
         rules: {            
@@ -71,7 +71,7 @@
                     url: "{{url('edit/checkemail')}}",
                     type: "post",
                     data: {
-                        email:email,
+                        email:$(email).val(),
                         id:id,
                         _token:"{{ csrf_token() }}"
                         },

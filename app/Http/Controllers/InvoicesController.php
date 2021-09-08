@@ -9,6 +9,7 @@ use App\Models\InvoicePaymentModel;
 use App\Models\PaymentMethodModel;
 use Auth;
 use DB;
+use App\Models\ContactLensTrackerModel;
 class InvoicesController extends Controller
 {
     /**
@@ -76,8 +77,8 @@ class InvoicesController extends Controller
                                                     (si.insurance_title) AS s_insurance_title,                              
                                                     h.invoice_date,
                                                     u.name,
-                                                    CONCAT('$',h.insurance_balance) AS insurance_balance,
-                                                    CONCAT('$',h.total_balance) AS total_balance,
+                                                     CONCAT('$',CONVERT(h.insurance_balance,decimal(10,2))) AS insurance_balance,
+                                                    CONCAT('$',CONVERT(h.total_balance,decimal(10,2))) AS total_balance,
                                                     h.is_out_of_pocket,
                                                     h.patient_firstname,
                                                     h.patient_lastname,
@@ -109,21 +110,48 @@ class InvoicesController extends Controller
                                         ");
 
                                         $yesterday_balance = DB::select("SELECT
-                                        c.*,
-                                        c.opening_balance AS yesterday_balance,
-                                        c.cash_till_date AS invoice_date
-                                    FROM
-                                        cash_till c
-                                    JOIN invoice_head h ON
-                                        h.clinic_id = c.clinic_id
-                                    WHERE  c.clinic_id = '".$clinic_id."' AND c.cash_till_date < '".$date."'
-                                    ORDER BY c.cash_till_date DESC LIMIT 1");
-                                      // dd($yesterday_balance);
-                                       $today_balance = DB::select("SELECT CONVERT(IFNULL(SUM(d.copayment),0),decimal(10,2)) AS today_balance,h.invoice_date
-                                        FROM  invoice_details d JOIN invoice_head h ON d.invoice_head_id = h.id
-                                        JOIN invoice_payments p ON p.invoice_head_id = h.id
-                                            WHERE h.invoice_date = '".$date."' AND h.clinic_id = '".$clinic_id."'  AND h.is_deleted = 0 AND p.payment_method_id = 2
+                                            c.*,
+                                            c.opening_balance AS yesterday_balance,
+                                            c.cash_till_date AS invoice_date
+                                        FROM
+                                            cash_till c
+                                        JOIN invoice_head h ON
+                                            h.clinic_id = c.clinic_id
+                                        WHERE  c.clinic_id = '".$clinic_id."' AND c.cash_till_date = '".$date."'
+                                        GROUP BY c.cash_till_date ");
+                                        //dd($yesterday_balance);
+
+                                        if($yesterday_balance == NULL){
+                                            $yesterday_balance = DB::select("SELECT
+                                                0 AS any_refunds,
+                                                0 AS extra_money_added,
+                                                0 AS given_money,
+                                                (SELECT SUM(ip.amount) FROM invoice_head ih 
+                                        JOIN invoice_payments ip ON
+                                            ip.invoice_head_id = ih.id WHERE  ih.invoice_date = '".$date."' AND ih.clinic_id = '".$clinic_id."'  AND h.is_deleted = 0 AND ip.payment_method_id = 2 ) AS cash_received_today,
+                                                c.end_balance AS yesterday_balance,
+                                                c.cash_till_date AS invoice_date
+                                            FROM
+                                                cash_till c
+                                            JOIN invoice_head h ON
+                                                h.clinic_id = c.clinic_id
+                                            WHERE  c.clinic_id = '".$clinic_id."'  AND c.cash_till_date < '".$date."'
+                                            ORDER BY c.cash_till_date  desc LIMIT 1");
+                                        }
+
+                                      //dd($yesterday_balance);
+                                       $today_balance = DB::select("SELECT
+                                            h.invoice_date,
+                                          CONVERT(IFNULL((p.amount),0),decimal(10,2)) AS today_balance
+                                        FROM
+                                        invoice_head h 
+                                        JOIN invoice_payments p ON
+                                            p.invoice_head_id = h.id
+                                        WHERE
+                                            h.invoice_date = '".$date."' AND h.clinic_id = '".$clinic_id."' 
+                                            AND h.is_deleted = 0 AND p.payment_method_id = 2
                                         ");
+                                       // dd($today_balance);
                        //$today_balance =  InvoiceHeadModel::select('invoice_head.*',DB::raw('SUM(invoice_details.copayment) as today_balance'))->join('invoice_details','invoice_head.id','invoice_details.invoice_head_id')->where('invoice_head.invoice_date',$date)->get();
                 // $saling_percentage[] = new DB();
                 
@@ -239,16 +267,17 @@ AS base");
 
             $invoice_patient_data = InvoiceHeadModel::select('invoice_head.*','clinics.location','users.name')->join('clinics','clinics.id','invoice_head.clinic_id')->join('users','invoice_head.doctor_id','users.id')->where('invoice_head.id','=',$id)->where('invoice_head.is_deleted','=','0')->get();
           //dd($invoice_patient_data);
-          $invoice_head_data = DB::select("SELECT invoice_head_id,service_id, quantity, pro_unit_price, copayment, insurance_payment,
+          $invoice_head_data = DB::select("SELECT invoice_head_id,service_id,contact_lens_id, quantity, pro_unit_price, copayment, insurance_payment,
           patient_firstname,patient_lastname,clinic_id,doctor_id,primary_insurance_id,secondary_insurance_id,is_out_of_pocket,family_upsell,is_completed,invoice_amount,invoice_date,remarks, s.id,s.title FROM services s 
           LEFT JOIN 
           (
-          SELECT d.invoice_head_id,d.service_id, d.quantity,d.pro_unit_price,d.copayment,d.insurance_payment,h.patient_firstname,h.patient_lastname,h.clinic_id,h.doctor_id,h.primary_insurance_id,h.secondary_insurance_id,h.is_out_of_pocket,h.family_upsell,h.is_completed,h.invoice_amount,h.invoice_date,h.remarks
+          SELECT d.invoice_head_id,d.service_id,d.contact_lens_id, d.quantity,d.pro_unit_price,d.copayment,d.insurance_payment,h.patient_firstname,h.patient_lastname,h.clinic_id,h.doctor_id,h.primary_insurance_id,h.secondary_insurance_id,h.is_out_of_pocket,h.family_upsell,h.is_completed,h.invoice_amount,h.invoice_date,h.remarks
           FROM `invoice_details` d  
           JOIN invoice_head h ON d.invoice_head_id = h.id
           WHERE d.invoice_head_id = '".$id."') AS i ON i.service_id = s.id  
           ORDER BY s.id           
            ");
+           //dd($invoice_head_data);
            $invoice_payment_data = DB::select("SELECT m.title,invoice_head_id,amount,payment_method_id
            FROM payment_methods m 
           LEFT JOIN 
@@ -281,12 +310,13 @@ AS base");
         $extra_copayment = 0;
         $quantity = 0;
         $unit_price = 0;
-        
+        global $claim_status;
         $amount = 0;
         $is_out_of_pocket = $request->is_out_of_pocket;
         $family_upsell = $request->family_upsell;
         if ($is_out_of_pocket == '') {
             $is_out_of_pocket = 0;
+            $claim_status = 'Unclaimed';
         }elseif($is_out_of_pocket == 1){
             $is_completed = 1;
         }
@@ -308,22 +338,30 @@ AS base");
                     'insurance_balance' => $request->insurance_balance,
                     'total_balance' => $request->total_balance,
                     'is_completed' => $is_completed,
+                    'claim_status' => $claim_status,
                     'invoice_amount' => $request->total_amount,
                     'invoice_date' => $request->invoice_date,
+                    'patient_balance' => $request->patient_balance,
+                    'discount' => $request->discount,
                     'remarks' => $request->remarks,
                     'created_at' => $date,
                     'created_by'=>$id,
                     'is_deleted'=>0,
         ])->id;
+
+        ContactLensTrackerModel::create([
+            'invoice_head_id' => $invoice_head_id,
+            'contact_lens_id' => $request->contact_lens_id,
+        ]);
       
         $payment_val = 1;
 foreach ($data as $value) {
    $i++;
             //print_r("value of i: "."" .$i++);
-            if ($i>15) {break;}
+            if ($i>16) {break;}
     else
     {
-        if($i<=3 ){              
+        if($i<=3){              
                 $copayment = $data["copayment_".$i];
                 if($quantity > 0 || $unit_price > 0){
                     $copayment = $quantity * $unit_price;
@@ -367,7 +405,7 @@ foreach ($data as $value) {
                 
             }
             }
-            if($i>=13 && $i<=15){
+            if($i>=13 && $i<=16){
                 $quantity = $data["quantity_".$i];
                 $unit_price = $data["unit_price_".$i];
                 // if($quantity > 0 || $unit_price > 0){
@@ -378,6 +416,7 @@ foreach ($data as $value) {
                 if($quantity > 0 || $unit_price > 0 ){
                     $copayment = $quantity * $unit_price;
                     InvoiceDetailModel::create([
+                        'contact_lens_id' => $request->contact_lens_id,
                         'invoice_head_id' => $invoice_head_id,
                         'service_id' => $i,
                         'quantity' => $quantity,
@@ -530,14 +569,18 @@ foreach ($data as $value) {
                     'created_by'=>$user_id,
                     'is_deleted'=>0,
         ]);
-      
+        ContactLensTrackerModel::updateOrCreate([
+            'invoice_head_id' => $invoice_head_id,
+        ],[
+            'contact_lens_id' => $request->contact_lens_id,
+        ]);
        $payment_val = 1;
 foreach ($data as $value) {
           $i++;
          
             
 
-            if ($i>15) {break;}
+            if ($i>16) {break;}
     else
     {
         
@@ -613,7 +656,7 @@ foreach ($data as $value) {
 
            // print_r("extra_copayment_".$i." ".$copayment."<br>");
             }
-            if($i>=13 && $i<=15){
+            if($i>=13 && $i<=16){
                 $quantity = $data["quantity_".$i];
                 $unit_price = $data["unit_price_".$i];
                 if($quantity > 0 &&  $unit_price > 0 ){
@@ -628,6 +671,7 @@ foreach ($data as $value) {
                         
                     ],[
                         'invoice_head_id' => $id,
+                        'contact_lens_id' => $request->contact_lens_id,
                         'service_id' => $i,
                         'quantity' => $quantity,
                         'pro_unit_price' => $unit_price,
@@ -750,8 +794,8 @@ foreach ($data as $value) {
                                                 (si.insurance_title) AS s_insurance_title,                              
                                                 h.invoice_date,
                                                 u.name,
-                                                CONCAT('$',h.insurance_balance) AS insurance_balance,
-                                                CONCAT('$',h.total_balance) AS total_balance,
+                                                CONCAT('$',CONVERT(h.insurance_balance,decimal(10,2))) AS insurance_balance,
+                                                CONCAT('$',CONVERT(h.total_balance,decimal(10,2))) AS total_balance,
                                                 h.is_completed,
                                                 h.is_out_of_pocket,
                                                 h.patient_firstname,
@@ -781,23 +825,47 @@ foreach ($data as $value) {
                                     ORDER BY result.id DESC
             ");
 
-                
-            $yesterday_balance = DB::select("SELECT
-            c.*,
-            c.opening_balance AS yesterday_balance,
-            c.cash_till_date AS invoice_date
-        FROM
-            cash_till c
-        JOIN invoice_head h ON
-            h.clinic_id = c.clinic_id
-        WHERE  c.clinic_id = '".$clinic_id."' AND c.cash_till_date < '".$date."'
-        ORDER BY c.cash_till_date DESC LIMIT 1");
+                                            
+                                     $yesterday_balance = DB::select("SELECT
+                                            c.*,
+                                            c.opening_balance AS yesterday_balance,
+                                            c.cash_till_date AS invoice_date
+                                        FROM
+                                            cash_till c
+                                        JOIN invoice_head h ON
+                                            h.clinic_id = c.clinic_id
+                                        WHERE  c.clinic_id = '".$clinic_id."' AND c.cash_till_date = '".$date."'
+                                        GROUP BY c.cash_till_date ");
+                                        //dd($yesterday_balance);
 
+                                        if($yesterday_balance == NULL){
+                                            $yesterday_balance = DB::select("SELECT
+                                                0 AS any_refunds,
+                                                0 AS extra_money_added,
+                                                0 AS given_money,
+                                                (SELECT SUM(ip.amount) FROM invoice_head ih 
+                                        JOIN invoice_payments ip ON
+                                            ip.invoice_head_id = ih.id WHERE  ih.invoice_date = '".$date."' AND ih.clinic_id = '".$clinic_id."'  AND h.is_deleted = 0 AND ip.payment_method_id = 2 ) AS cash_received_today,
+                                                c.end_balance AS yesterday_balance,
+                                                c.cash_till_date AS invoice_date
+                                            FROM
+                                                cash_till c
+                                            JOIN invoice_head h ON
+                                                h.clinic_id = c.clinic_id
+                                            WHERE  c.clinic_id = '".$clinic_id."'  AND c.cash_till_date < '".$date."'
+                                            ORDER BY c.cash_till_date  desc LIMIT 1");
+                                        }
                                       //dd($yesterday_balance);
-                                       $today_balance = DB::select("SELECT CONVERT(IFNULL(SUM(d.copayment),0),decimal(10,2)) AS today_balance,h.invoice_date
-                                        FROM  invoice_details d JOIN invoice_head h ON d.invoice_head_id = h.id
-                                        JOIN invoice_payments p ON p.invoice_head_id = h.id
-                                            WHERE h.invoice_date = '".$date."' AND h.clinic_id = '".$clinic_id."'  AND h.is_deleted = 0 AND p.payment_method_id = 2
+                                       $today_balance = DB::select("SELECT
+                                            h.invoice_date,
+                                          CONVERT(IFNULL((p.amount),0),decimal(10,2)) AS today_balance
+                                        FROM
+                                        invoice_head h 
+                                        JOIN invoice_payments p ON
+                                            p.invoice_head_id = h.id
+                                        WHERE
+                                            h.invoice_date = '".$date."' AND h.clinic_id = '".$clinic_id."' 
+                                            AND h.is_deleted = 0 AND p.payment_method_id = 2
                                         ");
                 
                 //dd($saling_percentage);
@@ -842,8 +910,8 @@ CONCAT(CONVERT( SUM(
                                                     (si.insurance_title) AS s_insurance_title,                              
                                                     h.invoice_date,
                                                     u.name,
-                                                    CONCAT('$',h.insurance_balance) AS insurance_balance,
-                                                    CONCAT('$',h.total_balance) AS total_balance,
+                                                     CONCAT('$',CONVERT(h.insurance_balance,decimal(10,2))) AS insurance_balance,
+                                                    CONCAT('$',CONVERT(h.total_balance,decimal(10,2))) AS total_balance,
                                                     h.is_completed,
                                                     h.is_out_of_pocket,
                                                     h.patient_firstname,
@@ -873,21 +941,45 @@ CONCAT(CONVERT( SUM(
                                         ORDER BY result.id DESC ");
 
                                         $yesterday_balance = DB::select("SELECT
-                                        c.*,
-                                        c.opening_balance AS yesterday_balance,
-                                        c.cash_till_date AS invoice_date
-                                    FROM
-                                        cash_till c
-                                    JOIN invoice_head h ON
-                                        h.clinic_id = c.clinic_id
-                                    WHERE  c.clinic_id = '".$clinic_id."' AND c.cash_till_date < '".$date."'
-                                    ORDER BY c.cash_till_date DESC LIMIT 1");
+                                            c.*,
+                                            c.opening_balance AS yesterday_balance,
+                                            c.cash_till_date AS invoice_date
+                                        FROM
+                                            cash_till c
+                                        JOIN invoice_head h ON
+                                            h.clinic_id = c.clinic_id
+                                        WHERE  c.clinic_id = '".$clinic_id."' AND c.cash_till_date = '".$date."'
+                                        GROUP BY c.cash_till_date ");
+                                        //dd($yesterday_balance);
 
+                                        if($yesterday_balance == NULL){
+                                            $yesterday_balance = DB::select("SELECT
+                                                0 AS any_refunds,
+                                                0 AS extra_money_added,
+                                                0 AS given_money,
+                                                (SELECT IFNULL(SUM(ip.amount),0) FROM invoice_head ih 
+                                        JOIN invoice_payments ip ON
+                                            ip.invoice_head_id = ih.id WHERE  ih.invoice_date = '".$date."' AND ih.clinic_id = '".$clinic_id."'  AND h.is_deleted = 0 AND ip.payment_method_id = 2 ) AS cash_received_today,
+                                                c.end_balance AS yesterday_balance,
+                                                c.cash_till_date AS invoice_date
+                                            FROM
+                                                cash_till c
+                                            JOIN invoice_head h ON
+                                                h.clinic_id = c.clinic_id
+                                            WHERE  c.clinic_id = '".$clinic_id."'  AND c.cash_till_date < '".$date."'
+                                            ORDER BY c.cash_till_date  desc LIMIT 1");
+                                        }
                                       //dd($yesterday_balance);
-                                       $today_balance = DB::select("SELECT CONVERT(IFNULL(SUM(d.copayment),0),decimal(10,2)) AS today_balance,h.invoice_date
-                                        FROM  invoice_details d JOIN invoice_head h ON d.invoice_head_id = h.id
-                                        JOIN invoice_payments p ON p.invoice_head_id = h.id
-                                            WHERE h.invoice_date = '".$date."' AND h.clinic_id = '".$clinic_id."'  AND h.is_deleted = 0 AND p.payment_method_id = 2
+                                    $today_balance = DB::select("SELECT
+                                            h.invoice_date,
+                                          CONVERT(IFNULL((p.amount),0),decimal(10,2)) AS today_balance
+                                        FROM
+                                        invoice_head h 
+                                        JOIN invoice_payments p ON
+                                            p.invoice_head_id = h.id
+                                        WHERE
+                                            h.invoice_date = '".$date."' AND h.clinic_id = '".$clinic_id."' 
+                                            AND h.is_deleted = 0 AND p.payment_method_id = 2
                                         ");
                 // $saling_percentage[] = new DB();
                // dd($yesterday_balance);
@@ -941,6 +1033,7 @@ CONCAT(CONVERT( SUM(
                                             u.name,
                                             c.location,
                                             h.is_completed,
+                                            h.claim_status,
                                             h.patient_firstname,
                                             h.patient_lastname,
                                             h.primary_insurance_id,  
@@ -996,6 +1089,9 @@ CONCAT(CONVERT( SUM(
                                                     (si.insurance_title) AS s_insurance_title,                              
                                                     h.invoice_date,
                                                     u.name,
+                                                    h.claim_status,
+                                                    CONCAT('$',CONVERT(h.insurance_balance,decimal(10,2))) AS insurance_balance,
+                                                    CONCAT('$',CONVERT(h.total_balance,decimal(10,2))) AS total_balance,
                                                     c.location,
                                                     h.patient_firstname,
                                                     h.patient_lastname,
@@ -1030,5 +1126,11 @@ CONCAT(CONVERT( SUM(
             $total_patients = DB::select("SELECT COUNT(id) AS overall_total FROM invoice_head");
             return view('Patient_Checkout.index',compact('reports','total_patients'));
     }
+    }
+    public function ClaimStatus(Request $request, $id)
+    {
+        $data =  InvoiceHeadModel::where('id','=',$id)->update([
+            'claim_status' => $request->claim_status
+        ]);
     }
 }

@@ -208,13 +208,7 @@ SELECT
         d.quantity,
         d.pro_unit_price,
         CONCAT('$', SUM(d.copayment)) AS total_amount,
-        CONCAT(
-            '$',
-            SUM(
-                CASE WHEN YEAR(base.invoice_date) = YEAR(d.insurance_payment_entered_at) THEN d.insurance_payment ELSE 0
-            END
-        )
-    ) AS insurance_payment,
+        CONCAT('$', SUM(d.insurance_payment)) AS insurance_payment,
     CONCAT(
         '$',
         SUM(

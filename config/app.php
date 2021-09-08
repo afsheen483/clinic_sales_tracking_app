@@ -178,6 +178,9 @@ return [
         Collective\Html\HtmlServiceProvider::class,
         App\Providers\ClinicProvider::class,
         App\Providers\InsuranceProvider::class,
+        App\Providers\TrackStatusProvider::class,
+        App\Providers\ContactLensProvider::class,
+        App\Providers\PriorityStatusProvider::class,
         App\Providers\Service::class,
         App\Providers\PaymentMethodProvider::class,
 

@@ -16,11 +16,11 @@
 
 <style>
     body {
-    -moz-transform: scale(0.8, 0.8); /* Moz-browsers */
+     /* Moz-browsers */
     zoom: 0.8; /* Other non-webkit browsers */
     zoom: 80%; /* Webkit browsers */
 }
-.slimScrollDiv{
+/* .slimScrollDiv{
     overflow:  visible !important;
 }
 .sidebar-inner{
@@ -28,9 +28,9 @@
 }
 .slimScrollBar{
     overflow-y: scroll;
-  height: auto;
-  max-height: 600px;
-}
+  height: auto !important;
+  max-height: 10000px !important; 
+} */
 </style>
 
    
@@ -150,6 +150,12 @@
                                 <span>Manager Report</span></a>
                         </li>
                         @endhasanyrole
+                        <li>
+                            <a href="/complaint_tracker"><i class="fas fa-comments"></i><span>Patient Complaint Tracker</span></a>
+                        </li>
+                        <li>
+                            <a href="/contact_lens_tracker"><i class="far fa-analytics"></i><span>Contact lens Tracker</span></a>
+                        </li>
                         @hasrole('admin')
                         <li >
                             <a href="/doctor_module"><i class="fa fa-tasks" aria-hidden="true"></i> <span>Doctor Report</span></a>
@@ -195,6 +201,10 @@
                                 <li><a href="/insurance"><i class="fas fa-analytics"></i>  <span> Insurances</span></a></li>
                                 <li>
                                     <a href="/clinics"><i class="fas fa-clinic-medical"></i><span>Clinics</span></a>
+                                </li>
+                                <li>
+                                    <a href="/contact_lens"><i class="fas fa-glasses"></i></i>
+                                        <span>Contact Lens</span></a>
                                 </li>
                                 {{-- <li>
                                     <a href="../service"><i class="far fa-tasks"></i>
